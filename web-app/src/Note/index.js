@@ -40,9 +40,6 @@ const Note = (props) => {
     fetchNote();
   }, [id, fetchNote]);
 
-  
-
-
   // ### TIMEOUT AUTOSAVE
   // useRef pour "let" => useState qui n'influe pas sur l'affichage
   const timer = useRef(null);

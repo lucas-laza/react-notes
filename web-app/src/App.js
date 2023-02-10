@@ -13,24 +13,28 @@ import SwitchTheme from "./Components/SwitchTheme";
 import { FiPlus } from "react-icons/fi";
 
 function App() {
-  // const { id } = useParams();
 
   const [notes, setNotes] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
 
-  const [theme, setTheme] = useState(darkTheme);
-
-  const [userTheme, setUserTheme] = useState(null);
-
+  // ==> sortedNotes
+  const [sortedNotes, setSortedNotes] = useState(null);
+  
   const [tempNotes, setTempNotes] = useState(null);
   const [tempNotesStatus, setTempNotesStatus] = useState(false);
 
   const [selectedNote, setSelectedNote] = useState(0);
 
-  const [sortedNotes, setSortedNotes] = useState(null);
 
+  const [isLoading, setIsLoading] = useState(true);
 
+  const [theme, setTheme] = useState(darkTheme);
+
+  const [userTheme, setUserTheme] = useState(null);
+
+  const navigate = useNavigate();
+
+  
+  // THEME
   const fetchTheme = async () => {
     const response = await fetch("/profile");
     const fetched_theme = await response.json(); 
@@ -51,41 +55,6 @@ function App() {
     });
   }
 
-  const fetchNotes = async () => {
-    const response = await fetch("/notes?_sort=date&_order=desc");
-    const notes = await response.json();
-    setNotes(notes);
-    setIsLoading(false);
-  };
-
-  useEffect(() => {
-    setLightTheme(localStorage.getItem('theme'));
-    fetchNotes();
-    fetchTheme();
-  }, []);
-
-  useEffect(() => {
-    // console.log('set sorted', sortedNotes);
-    if (null !== notes) {
-      setSortedNotes(
-        notes.sort((a,b) => {
-        return new Date(a.date).getTime() - 
-            new Date(b.date).getTime()
-      }).reverse())
-    }
-  }, [notes]);
-
-  useEffect(() => {
-    console.log(sortedNotes);
-    if (null !== sortedNotes) {
-      setTempNotes(sortedNotes);
-    }
-  }, [sortedNotes]);
-
-  useEffect(() => {
-    console.log(selectedNote);
-  }, [selectedNote]);
-  
   useEffect(() => {
     if ( null !== userTheme) {
       storeUserTheme();
@@ -99,28 +68,51 @@ function App() {
     localStorage.setItem('theme', theme)
  }
 
-  const updateTitle = async (noteToUpdate) => {
-    setNotes(
-      notes.map(note => note.id === noteToUpdate.id ? noteToUpdate : note)
-    )
+ const setLightTheme = (theme) => {
+    setUserTheme(theme);  
+    if (theme == 'light') {
+      setTheme(lightTheme);
+    } else {
+      setTheme(darkTheme);
+    }
+  }
+
+  // NOTES
+  const fetchNotes = async () => {
+    // ==> _sort=date pour afficher les dernières notes éditées en premier dès le chargement de la page
+    const response = await fetch("/notes?_sort=date&_order=desc");
+
+    const notes = await response.json();
+    setNotes(notes);
+    setIsLoading(false);
   };
 
-  const addTitle = (note) => {
-    console.log('add title');
-    setNotes(
-      [{
-        id: note.id,
-        title: note.title,
-        date: note.date
-      }].concat(notes)
-    );
-  }
+  useEffect(() => {
+    setLightTheme(localStorage.getItem('theme'));
+    fetchNotes();
+    fetchTheme();
+  }, []);
 
-  const delTitle = (id) => {
-    setNotes((current) =>
-      current.filter((note) => note.id !== id)
-    );
-  }
+  useEffect(() => {
+    // ==> Dès que les notes changent, on les tries et on actualise SortedNotes
+    if (null !== notes) {
+      setSortedNotes(
+        notes.sort(
+          // ==> Methode pour trier (sort) notre tableau en fonction de la valeur de "date" de chaque object
+          (a,b) => {
+            return new Date(a.date).getTime() - new Date(b.date).getTime()
+          }
+          // ==> reverse() pour afficher les plus récent en premier
+        ).reverse())
+    }
+  }, [notes]);
+
+  useEffect(() => {
+    // ==> (Hors sujet) Dès que les sortedNotes changent on met à jour tempNotes (qui est utilisé pour la recherche)
+    if (null !== sortedNotes) {
+      setTempNotes(sortedNotes);
+    }
+  }, [sortedNotes]);
 
   const createNote = async () => {
     const response = await fetch(`/notes`, {
@@ -156,14 +148,29 @@ function App() {
       navigate(`/`);
     }
   }
+  
+  // TITLES
+  const updateTitle = async (noteToUpdate) => {
+    setNotes(
+      notes.map(note => note.id === noteToUpdate.id ? noteToUpdate : note)
+    )
+  };
 
-  const setLightTheme = (theme) => {
-    setUserTheme(theme);  
-    if (theme == 'light') {
-      setTheme(lightTheme);
-    } else {
-      setTheme(darkTheme);
-    }
+  const addTitle = (note) => {
+    console.log('add title');
+    setNotes(
+      [{
+        id: note.id,
+        title: note.title,
+        date: note.date
+      }].concat(notes)
+    );
+  }
+
+  const delTitle = (id) => {
+    setNotes((current) =>
+      current.filter((note) => note.id !== id)
+    );
   }
 
   const searchTitle = (text) => {
@@ -184,14 +191,7 @@ function App() {
             <label>
               <span>Theme</span>
               <SwitchTheme onChange={setLightTheme} checked={userTheme}/>
-              {/* <Switch onChange={setLightTheme} checked={false} /> */}
             </label>
-            
-            {/* <input type={"checkbox"} onChange={(event) => {
-              setLightTheme(event.target.checked);
-            }
-            }>
-            </input> */}
           </ModeChanger>
         ) : null
       }
@@ -218,6 +218,7 @@ function App() {
                 <LinkToNote id={note.id} title={note.title}/>
               </li>
             ))
+            // ==> utilisation de sortedNotes au lieu de notes
             : (sortedNotes) &&
             sortedNotes.map((note) => (
               (selectedNote == note.id) ?
@@ -241,18 +242,6 @@ function App() {
         <CreateLink onClick={createNote}>
           <div style={{display:"flex", justifyContent:"center", alignItems:"center", gap:"5px"}}>Create note <FiPlus /></div> 
         </CreateLink>
-        {/* Equivalant de ça => */}
-        {
-        // notes ? (
-        //   <NoteList>
-        //     {notes.map((note) => (
-        //       <li key={note.id}>
-        //         <LinkToNote id={note.id} title={note.title} />
-        //       </li>
-        //     ))}
-        //   </NoteList>
-        // ) : null
-        }
       </Side>
       <Main>
         <Routes>
