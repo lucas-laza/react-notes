@@ -249,6 +249,8 @@ function App() {
             path="/"
             element={<div>Sélectionnez une note pour l'éditer</div>}
           />
+          {/* ==> quand une note est enregistré, le composant fait appel a sa props onSave qui trigger la fonction updateTitle,
+           qui utilise setNote, donc qui appelle setSortedNotes */}
           <Route path="/notes/:id" element={<Note onSave={updateTitle} deleteNote={delNote} onSelect={setSelectedNote}/>} />
         </Routes>
       </Main>
