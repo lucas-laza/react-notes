@@ -18,11 +18,10 @@ function App() {
 
   // ==> sortedNotes
   const [sortedNotes, setSortedNotes] = useState(null);
-  
-  const [tempNotes, setTempNotes] = useState(null);
-  const [tempNotesStatus, setTempNotesStatus] = useState(false);
 
   const [selectedNote, setSelectedNote] = useState(0);
+
+  const [searchValue, setSearchValue] = useState('');
 
 
   const [isLoading, setIsLoading] = useState(true);
@@ -107,13 +106,6 @@ function App() {
     }
   }, [notes]);
 
-  useEffect(() => {
-    // ==> (Hors sujet) Dès que les sortedNotes changent on met à jour tempNotes (qui est utilisé pour la recherche)
-    if (null !== sortedNotes) {
-      setTempNotes(sortedNotes);
-    }
-  }, [sortedNotes]);
-
   const createNote = async () => {
     const response = await fetch(`/notes`, {
       headers: {
@@ -173,16 +165,6 @@ function App() {
     );
   }
 
-  const searchTitle = (text) => {
-    if (text) {
-      setTempNotes(notes.filter(note => note.title.toLowerCase().includes(text.toLowerCase())));
-      setTempNotesStatus(true);
-    } else {
-      setTempNotes(notes);
-      setTempNotesStatus(false);
-    }
-  }
-
   return (
     <ThemeProvider theme={theme}>
       {
@@ -203,33 +185,28 @@ function App() {
           <SearchBar>
             <input type={"text"} placeholder="Search note" onChange={ (event) => {
               let text = event.target.value;
-                searchTitle(text);
-            } }></input>
+              setSearchValue(text)
+            } }
+            value={searchValue}></input>
           </SearchBar>
           <NoteList>
-            { (tempNotesStatus && tempNotes) ? 
-            tempNotes.map((note) => (
-              (selectedNote == note.id) ?
-              <li key={note.id} style={{color:"orange"}}>
-                <LinkToNote id={note.id} title={note.title}/>
-              </li>
-              :
-              <li key={note.id}>
-                <LinkToNote id={note.id} title={note.title}/>
-              </li>
-            ))
-            // ==> utilisation de sortedNotes au lieu de notes
-            : (sortedNotes) &&
-            sortedNotes.map((note) => (
-              (selectedNote == note.id) ?
-              <li key={note.id} style={{color:"orange"}}>
-                <LinkToNote id={note.id} title={note.title}/>
-              </li>
-              :
-              <li key={note.id}>
-                <LinkToNote id={note.id} title={note.title}/>
-              </li>
-            ))
+            {/* /!\ Ne pas utiliser de duplucation d'etats: le filter se fait dans le rendu  */}
+          {
+              sortedNotes && (
+                sortedNotes.filter(
+                  note => note.title.toLowerCase().includes(searchValue.toLowerCase())
+                ).map((note_sorted) => (
+                    (selectedNote == note_sorted.id) ? (
+                      <li key={note_sorted.id} style={{color:"orange"}}>
+                        <LinkToNote id={note_sorted.id} title={note_sorted.title}/>
+                      </li>
+                  ) : (
+                      <li key={note_sorted.id}>
+                        <LinkToNote id={note_sorted.id} title={note_sorted.title}/>
+                      </li>
+                  )
+                ))
+              )
             }
           </NoteList>
           </>
