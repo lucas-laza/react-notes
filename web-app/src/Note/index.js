@@ -48,7 +48,7 @@ const Note = (props) => {
   const timer = useRef(null);
   const saveTimeout = () => {
     clearTimeout(timer.current);
-    timer.current = setTimeout(saveNote, 2000);
+    timer.current = setTimeout(saveNote, 750);
   }
   // Trigger when changed
   useEffect(() => {

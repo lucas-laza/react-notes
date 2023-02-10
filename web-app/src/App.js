@@ -65,6 +65,7 @@ function App() {
   }, []);
 
   useEffect(() => {
+    // console.log('set sorted', sortedNotes);
     if (null !== notes) {
       setSortedNotes(
         notes.sort((a,b) => {
@@ -105,10 +106,12 @@ function App() {
   };
 
   const addTitle = (note) => {
+    console.log('add title');
     setNotes(
       [{
         id: note.id,
         title: note.title,
+        date: note.date
       }].concat(notes)
     );
   }
@@ -127,7 +130,8 @@ function App() {
       method: "POST",
       body: JSON.stringify({
         title: "New Note",
-        content: "Edit me"
+        content: "Edit me",
+        date: new Date()
       })
     });
     if (!response.ok) {
@@ -171,8 +175,6 @@ function App() {
       setTempNotesStatus(false);
     }
   }
-
-  // console.log(useLocation().pathname);
 
   return (
     <ThemeProvider theme={theme}>

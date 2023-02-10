@@ -27,6 +27,10 @@ export const Content = styled.textarea`
   font-family: inherit;
   color: inherit;
   background: transparent;
+
+  &:focus {
+    outline: none;
+  }
 `;
 
 export const SaveAndStatus = styled.div`
